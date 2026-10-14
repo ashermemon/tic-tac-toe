@@ -2,15 +2,20 @@
    Base Styles
    ========================================================================== */
 html {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
-*, ::before, ::after {
-    box-sizing: inherit;
+*,
+::before,
+::after {
+  box-sizing: inherit;
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   background-color: #0f172a;
   color: #f8fafc;
   display: flex;
@@ -104,5 +109,9 @@ header h1 {
 }
 
 /* Colors for players */
-.cell.x { color: #f43f5e; }
-.cell.o { color: #3b82f6; }
+.cell.x {
+  color: #f43f5e;
+}
+.cell.o {
+  color: #3b82f6;
+}

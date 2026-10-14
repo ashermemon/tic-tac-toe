@@ -16,6 +16,16 @@
     <!-- Game Status & Reset -->
     <section class="status-panel">
       <div id="status-message" class="status-message">Player X's Turn</div>
+      <input
+          type="range"
+          id="size"
+          name="size"
+          min="2"
+          max="10"
+          value="3"
+          step="1"
+        />
+        <p>Board Size: <span id="slider-value">3</span></p>
       <button id="reset-btn" class="btn">Restart Game</button>
     </section>
 
