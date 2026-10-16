@@ -65,6 +65,7 @@ header h1 {
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
+  margin: 0px 5px;
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
@@ -114,4 +115,14 @@ header h1 {
 }
 .cell.o {
   color: #3b82f6;
+}
+
+#ai-btn {
+  background-color: #f8ab38;
+}
+#ai-btn:hover {
+  background-color: #fccb7d;
+}
+#ai-btn:disabled {
+  background-color: grey;
 }

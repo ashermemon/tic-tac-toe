@@ -2,11 +2,17 @@
 // Global State Variables
 // ==========================================================================
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let boardsize = 3;
 let board = Array.from({ length: boardsize }, () => Array(boardsize).fill(""));
 let currentPlayer = "X";
 let isGameActive = true;
 let winner = "";
+let aiEnabled = false;
+let aiPlayer = "";
+let isAiMoving = false;
+let gameId = 0;
+let gameStarted = false;
 
 // ==========================================================================
 // DOM Elements
@@ -14,6 +20,7 @@ let winner = "";
 const boardElement = document.getElementById("board");
 const statusElement = document.getElementById("status-message");
 const resetBtn = document.getElementById("reset-btn");
+const aiBtn = document.getElementById("ai-btn");
 const slider = document.getElementById("size");
 const output = document.getElementById("slider-value");
 
@@ -22,33 +29,50 @@ const output = document.getElementById("slider-value");
 // ==========================================================================
 
 // Listen for the HTML document to fully load before running our JS
-document.addEventListener("DOMContentLoaded", initGame);
+document.addEventListener("DOMContentLoaded", reset);
 
+// Attach event listener to the reset button
+resetBtn.addEventListener("click", resetGame);
+aiBtn.addEventListener("click", () => {
+  aiEnabled = !aiEnabled;
+  aiBtn.innerHTML = aiEnabled ? "Play Against Human" : "Play Against AI";
+  reset();
+});
 slider.oninput = function () {
   boardsize = parseInt(this.value);
-  initGame();
+  reset();
 };
 
 /**
  * Sets up the initial game board by creating 9 div elements,
  * attaching click listeners to them, and putting them on the screen.
  */
-function initGame() {
+function reset() {
+  gameId++;
+  isAiMoving = false;
+  gameStarted = false;
   slider.disabled = false;
+  aiBtn.disabled = false;
   // Clear any existing HTML inside the board container
   // This is important for resetting the game
 
   boardElement.style.gridTemplateColumns = `repeat(${boardsize}, 1fr)`;
   boardElement.style.gridTemplateRows = `repeat(${boardsize}, 1fr)`;
-
   board = Array.from({ length: boardsize }, () => Array(boardsize).fill(""));
   output.innerHTML = boardsize;
-  isGameActive = true;
+  isGameActive = false;
   winner = "";
   currentPlayer = "X";
+  Math.floor(Math.random() * 2) == 0 ? (aiPlayer = "X") : (aiPlayer = "O");
 
   boardElement.innerHTML = "";
-  statusElement.innerHTML = "Player " + currentPlayer + "'s Turn";
+  statusElement.innerHTML = aiEnabled
+    ? aiPlayer == currentPlayer
+      ? "AI's Turn (" + currentPlayer + ")"
+      : "Player " + currentPlayer + "'s Turn"
+    : "Player " + currentPlayer + "'s Turn";
+  resetBtn.innerHTML = isGameActive ? "Reset Game" : "Start Game";
+
   // Loop n^2 times to create the nxn grid
   for (let r = 0; r < board.length; r++) {
     for (let c = 0; c < board[r].length; c++) {
@@ -70,9 +94,17 @@ function initGame() {
       boardElement.appendChild(cell);
     }
   }
+}
 
-  // Attach event listener to the reset button
-  resetBtn.addEventListener("click", resetGame);
+function initGame() {
+  gameStarted = true;
+  isGameActive = true;
+  resetBtn.innerHTML = "Reset Game";
+  slider.disabled = true;
+  aiBtn.disabled = true;
+  if (aiEnabled && aiPlayer == currentPlayer) {
+    aiTurn();
+  }
 }
 
 // ==========================================================================
@@ -84,15 +116,35 @@ function initGame() {
  * @param {Event} event - The click event object
  */
 function handleCellClick(event) {
+  if (isAiMoving) return;
+  if (!isGameActive) return;
   // 'event.target' refers to the exact HTML element that was clicked
   slider.disabled = true;
+  aiBtn.disabled = true;
 
   const clickedCell = event.target;
+  place(
+    parseInt(clickedCell.dataset.row),
+    parseInt(clickedCell.dataset.column),
+  );
+}
 
-  // Retrieve the index we stored earlier and convert it to a number
-  const cellRow = parseInt(clickedCell.dataset.row);
-  const cellColumn = parseInt(clickedCell.dataset.column);
+async function aiTurn() {
+  const currentGame = gameId;
+  slider.disabled = true;
+  aiBtn.disabled = true;
+  isAiMoving = true;
+  await wait(1500);
+  if (currentGame !== gameId) {
+    return;
+  }
+  const [r, c] = selectMove(board);
+  place(r, c);
 
+  isAiMoving = false;
+}
+
+function place(cellRow, cellColumn) {
   // Check if the cell is already filled OR if the game is over.
   // If either is true, exit the function early (do nothing).
   if (board[cellRow][cellColumn] !== "" || isGameActive === false) {
@@ -102,7 +154,7 @@ function handleCellClick(event) {
   // TODO 1: Update the internal state (the 'board' array) with the current player
 
   board[cellRow][cellColumn] = currentPlayer;
-
+  const clickedCell = boardElement.children[cellRow * boardsize + cellColumn];
   // TODO 2: Update the DOM to reflect the internal state!
 
   clickedCell.classList.remove("x", "o");
@@ -115,7 +167,12 @@ function handleCellClick(event) {
 
   if (checkWin()) {
     slider.disabled = false;
-    statusElement.innerHTML = "Congrats " + winner + "! You win!";
+    aiBtn.disabled = false;
+    statusElement.innerHTML =
+      aiEnabled && aiPlayer == currentPlayer
+        ? "You lost to AI 😭😭😭😭😭😭 Congrats " + winner + "!"
+        : "Congrats " + winner + "! You win!";
+    resetBtn.innerHTML = "Play Again";
     return;
   }
 
@@ -123,7 +180,9 @@ function handleCellClick(event) {
 
   if (checkTie()) {
     slider.disabled = false;
+    aiBtn.disabled = false;
     statusElement.innerHTML = "It's a tie! Play again?";
+    resetBtn.innerHTML = "Play Again";
     return;
   }
 
@@ -132,8 +191,15 @@ function handleCellClick(event) {
   currentPlayer = currentPlayer == "X" ? "O" : "X";
 
   // TODO 6: Update the statusElement to show whose turn it is now
+  statusElement.innerHTML = aiEnabled
+    ? aiPlayer == currentPlayer
+      ? "AI's Turn (" + currentPlayer + ")"
+      : "Player " + currentPlayer + "'s Turn"
+    : "Player " + currentPlayer + "'s Turn";
 
-  statusElement.innerHTML = "Player " + currentPlayer + "'s Turn";
+  if (aiEnabled && aiPlayer == currentPlayer) {
+    aiTurn();
+  }
 }
 
 /**
@@ -225,7 +291,10 @@ function checkTie() {
  */
 function resetGame() {
   // TODO: reset internal state
-
+  if (gameStarted) {
+    reset();
+  } else {
+    initGame();
+  }
   // To clear the DOM easily, just call initGame() again to rebuild the empty cells!
-  initGame();
 }
