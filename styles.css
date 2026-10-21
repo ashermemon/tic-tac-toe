@@ -117,12 +117,28 @@ header h1 {
   color: #3b82f6;
 }
 
-#ai-btn {
+#human-btn {
   background-color: #f8ab38;
 }
-#ai-btn:hover {
+#human-btn:hover {
   background-color: #fccb7d;
 }
-#ai-btn:disabled {
+#human-btn:disabled,
+#ai-btn-e:disabled,
+#ai-btn-h:disabled {
   background-color: grey;
+}
+
+#ai-btn-e {
+  background-color: #27c75f;
+}
+#ai-btn-e:hover {
+  background-color: #91c69e;
+}
+
+#ai-btn-h {
+  background-color: #e27171;
+}
+#ai-btn-h:hover {
+  background-color: #fc7d7d;
 }

@@ -10,6 +10,7 @@ let isGameActive = true;
 let winner = "";
 let aiEnabled = false;
 let aiPlayer = "";
+let aiDifficulty = "hard";
 let isAiMoving = false;
 let gameId = 0;
 let gameStarted = false;
@@ -20,7 +21,10 @@ let gameStarted = false;
 const boardElement = document.getElementById("board");
 const statusElement = document.getElementById("status-message");
 const resetBtn = document.getElementById("reset-btn");
-const aiBtn = document.getElementById("ai-btn");
+const aiEBtn = document.getElementById("ai-btn-e");
+const aiHBtn = document.getElementById("ai-btn-h");
+const humanBtn = document.getElementById("human-btn");
+const gamemode = document.getElementById("gamemode");
 const slider = document.getElementById("size");
 const output = document.getElementById("slider-value");
 
@@ -33,11 +37,28 @@ document.addEventListener("DOMContentLoaded", reset);
 
 // Attach event listener to the reset button
 resetBtn.addEventListener("click", resetGame);
-aiBtn.addEventListener("click", () => {
-  aiEnabled = !aiEnabled;
-  aiBtn.innerHTML = aiEnabled ? "Play Against Human" : "Play Against AI";
+function setMode(enabled, difficulty) {
+  aiEnabled = enabled;
+  aiDifficulty = difficulty;
+  aiEBtn.hidden = enabled;
+  aiHBtn.hidden = enabled;
+  humanBtn.hidden = !enabled;
+  gamemode.innerHTML = !enabled
+    ? "Human vs Human"
+    : difficulty == "easy"
+      ? "Human vs Easy AI"
+      : "Human vs Hard AI";
   reset();
-});
+}
+aiEBtn.addEventListener("click", () => setMode(true, "easy"));
+aiHBtn.addEventListener("click", () => setMode(true, "hard"));
+humanBtn.addEventListener("click", () => setMode(false, aiDifficulty));
+
+function setModeButtonsDisabled(disabled) {
+  aiEBtn.disabled = disabled;
+  aiHBtn.disabled = disabled;
+  humanBtn.disabled = disabled;
+}
 slider.oninput = function () {
   boardsize = parseInt(this.value);
   reset();
@@ -52,7 +73,7 @@ function reset() {
   isAiMoving = false;
   gameStarted = false;
   slider.disabled = false;
-  aiBtn.disabled = false;
+  setModeButtonsDisabled(false);
   // Clear any existing HTML inside the board container
   // This is important for resetting the game
 
@@ -101,7 +122,7 @@ function initGame() {
   isGameActive = true;
   resetBtn.innerHTML = "Reset Game";
   slider.disabled = true;
-  aiBtn.disabled = true;
+  setModeButtonsDisabled(true);
   if (aiEnabled && aiPlayer == currentPlayer) {
     aiTurn();
   }
@@ -120,7 +141,7 @@ function handleCellClick(event) {
   if (!isGameActive) return;
   // 'event.target' refers to the exact HTML element that was clicked
   slider.disabled = true;
-  aiBtn.disabled = true;
+  setModeButtonsDisabled(true);
 
   const clickedCell = event.target;
   place(
@@ -132,13 +153,13 @@ function handleCellClick(event) {
 async function aiTurn() {
   const currentGame = gameId;
   slider.disabled = true;
-  aiBtn.disabled = true;
+  setModeButtonsDisabled(true);
   isAiMoving = true;
   await wait(1500);
   if (currentGame !== gameId) {
     return;
   }
-  const [r, c] = selectMove(board);
+  const [r, c] = aiDifficulty == "easy" ? selectMove() : findBestMove();
   place(r, c);
 
   isAiMoving = false;
@@ -165,9 +186,9 @@ function place(cellRow, cellColumn) {
 
   // TODO 3: Check for (and possibly handle) a winner (Call the checkWin() function)
 
-  if (checkWin()) {
+  if (checkWin(currentPlayer)) {
     slider.disabled = false;
-    aiBtn.disabled = false;
+    setModeButtonsDisabled(false);
     statusElement.innerHTML =
       aiEnabled && aiPlayer == currentPlayer
         ? "You lost to AI 😭😭😭😭😭😭 Congrats " + winner + "!"
@@ -180,7 +201,7 @@ function place(cellRow, cellColumn) {
 
   if (checkTie()) {
     slider.disabled = false;
-    aiBtn.disabled = false;
+    setModeButtonsDisabled(false);
     statusElement.innerHTML = "It's a tie! Play again?";
     resetBtn.innerHTML = "Play Again";
     return;
@@ -206,11 +227,11 @@ function place(cellRow, cellColumn) {
  * Checks for a winner.
  * @returns {boolean} true if there is a winner, false otherwise
  */
-function checkWin() {
+function checkWin(player) {
   // TODO
 
-  if (checkRow() || checkColumn() || checkDiagonal()) {
-    winner = currentPlayer;
+  if (checkRow(player) || checkColumn(player) || checkDiagonal(player)) {
+    winner = player;
     isGameActive = false;
     return true;
   }
@@ -218,12 +239,12 @@ function checkWin() {
   return false;
 }
 
-function checkRow() {
+function checkRow(player) {
   let rowWon;
   for (let r = 0; r < board.length; r++) {
     rowWon = true;
     for (let c = 0; c < board[r].length; c++) {
-      if (!board[r][c] || board[r][c] != currentPlayer) {
+      if (!board[r][c] || board[r][c] != player) {
         rowWon = false;
         break;
       }
@@ -232,12 +253,12 @@ function checkRow() {
   }
   return false;
 }
-function checkColumn() {
+function checkColumn(player) {
   let columnWon;
   for (let c = 0; c < board.length; c++) {
     columnWon = true;
     for (let r = 0; r < board[c].length; r++) {
-      if (!board[r][c] || board[r][c] != currentPlayer) {
+      if (!board[r][c] || board[r][c] != player) {
         columnWon = false;
         break;
       }
@@ -246,14 +267,14 @@ function checkColumn() {
   }
   return false;
 }
-function checkDiagonal() {
+function checkDiagonal(player) {
   let diagWon;
   for (let diag = 0; diag < 2; diag++) {
     diagWon = true;
     for (let i = 0; i < board.length; i++) {
       if (
         !board[i][diag == 1 ? boardsize - 1 - i : i] ||
-        board[i][diag == 1 ? boardsize - 1 - i : i] != currentPlayer
+        board[i][diag == 1 ? boardsize - 1 - i : i] != player
       ) {
         diagWon = false;
         break;
