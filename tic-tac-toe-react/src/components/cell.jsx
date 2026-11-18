@@ -1,11 +1,9 @@
-import React from "react";
-
-export default function Cell({ boardSize, value }) {
+export default function Cell({ boardSize, value, r, c, selectCell }) {
   return (
     <div
-      className={"cell"}
+      className={`cell ${value === "X" ? "x" : "o"} ${value ? "taken" : ""}`}
       style={{ fontSize: `${(1 / boardSize) * 12}rem` }}
-      // onClick={() => handleCellClick(rIndex, cIndex)}
+      onClick={() => selectCell(r, c)}
     >
       {value}
     </div>

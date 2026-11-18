@@ -1,7 +1,7 @@
 import React from "react";
 import Cell from "./cell";
 
-export default function Board({ board, boardSize }) {
+export default function Board({ board, boardSize, selectCell }) {
   return (
     <main className="board-container">
       <div
@@ -17,6 +17,9 @@ export default function Board({ board, boardSize }) {
               key={rIndex + "-key-" + cIndex}
               boardSize={boardSize}
               value={cell}
+              r={rIndex}
+              c={cIndex}
+              selectCell={selectCell}
             />
           )),
         )}
